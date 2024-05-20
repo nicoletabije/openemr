@@ -22,6 +22,7 @@ use OpenEMR\Services\CodeTypesService;
 use OpenEMR\Services\EncounterService;
 use OpenEMR\Services\FacilityService;
 use OpenEMR\Services\ListService;
+use Middleware\MiddlewareService;
 
 if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
     CsrfUtils::csrfNotVerified();
@@ -29,7 +30,8 @@ if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
 
 $facilityService = new FacilityService();
 $encounterService = new EncounterService();
-
+$postData = $_POST;
+$sessionData = $_SESSION;
 if ($_POST['mode'] == 'new' && ($GLOBALS['enc_service_date'] == 'hide_both' || $GLOBALS['enc_service_date'] == 'show_edit')) {
     $date = (new DateTime())->format('Y-m-d H:i:s');
 } elseif ($_POST['mode'] == 'update' && ($GLOBALS['enc_service_date'] == 'hide_both' || $GLOBALS['enc_service_date'] == 'show_new')) {
@@ -57,7 +59,6 @@ $encounter_provider = $_POST['provider_id'] ?? null;
 $referring_provider_id = $_POST['referring_provider_id'] ?? null;
 //save therapy group if exist in external_id column
 $external_id = isset($_POST['form_gid']) ? $_POST['form_gid'] : '';
-$ordering_provider_id = $_POST['ordering_provider_id'] ?? null;
 
 $discharge_disposition = $_POST['discharge_disposition'] ?? null;
 $discharge_disposition = $discharge_disposition != '_blank' ? $discharge_disposition : null;
@@ -114,9 +115,10 @@ if ($mode == 'new') {
         'encounter_type_code' => $encounter_type_code,
         'encounter_type_description' => $encounter_type_description,
         'in_collection' => $in_collection,
-        'ordering_provider_id' => $ordering_provider_id,
     ];
 
+    $middlewareService = new MiddlewareService();
+    $middlewareService->insertEncounterData($data, 'encounter');
     $col_string = implode(" = ?, ", array_keys($data)) . " = ?";
     $sql = sprintf("INSERT INTO form_encounter SET %s", $col_string);
     $enc_id = sqlInsert($sql, array_values($data));
@@ -155,7 +157,6 @@ if ($mode == 'new') {
         $encounter_type_code,
         $encounter_type_description,
         $in_collection,
-        $ordering_provider_id,
         $id
     );
     $col_string = implode(" = ?, ", [
@@ -174,8 +175,7 @@ if ($mode == 'new') {
         'referring_provider_id',
         'encounter_type_code',
         'encounter_type_description',
-        'in_collection',
-        'ordering_provider_id',
+        'in_collection'
     ]) . " =?";
     sqlStatement("UPDATE form_encounter SET $datepart $col_string WHERE id = ?", $sqlBindArray);
 } else {
@@ -200,6 +200,7 @@ $result4 = sqlStatement("SELECT fe.encounter,fe.date,openemr_postcalendar_catego
 <html>
 <body>
     <script>
+        console.log(`<?php echo var_dump($postData). ' '.var_dump($sessionData); ?>`);
         EncounterDateArray = Array();
         CalendarCategoryArray = Array();
         EncounterIdArray = Array();

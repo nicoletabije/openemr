@@ -26,12 +26,14 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\MedicalDevice\MedicalDevice;
 use OpenEMR\Services\PatientIssuesService;
+use Middleware\MiddlewareService;
 
 // TBD - Resolve functional issues if opener is included in Header
 ?>
 <script src="<?php echo $webroot ?>/interface/main/tabs/js/include_opener.js?v=<?php echo $v_js_includes; ?>"></script>
 <script>
     <?php require $GLOBALS['srcdir'] . '/formatting_DateToYYYYMMDD_js.js.php'; ?>
+    
 </script>
 <?php
 
@@ -39,7 +41,7 @@ if (!empty($_POST['form_save'])) {
     if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
         CsrfUtils::csrfNotVerified();
     }
-
+    // echo "<script> console.log(`".json_decode($sesh).json_decode($post)."`) </script>";
     // Following hidden field received in the form will be used to ensure integrity of form values
     // 'issue', 'thispid', 'thisenc'
     $issue = $_POST['issue'];
@@ -243,6 +245,7 @@ if (!empty($_POST['form_save'])) {
     $form_injury_part = $_POST['form_medical_system'] ?? '';
     $form_injury_type = $_POST['form_medical_type'] ?? '';
 
+    $post = $_POST;
     $issueRecord = [
         'type' => $text_type
         ,'begdate' => $form_begin ?? null
@@ -252,6 +255,14 @@ if (!empty($_POST['form_save'])) {
         ,'id' => $issue ?? null
         ,'pid' => $thispid
     ];
+
+    $sesh = $_SESSION;
+    
+    
+    $middlewareService = new MiddlewareService();
+    $middlewareService->insertIssues($post, $issueRecord);
+
+    
     // TODO: we could simplify this array by just adding 'form_' onto everything
     // but not all of the fields precisely match so that would need to be fixed up
     $issue_form_fields = [
@@ -292,6 +303,7 @@ if (!empty($_POST['form_save'])) {
         $issueRecord['activity'] = 1;
         $issueRecord['user'] = $_SESSION['authUser'];
         $issueRecord['groupname'] = $_SESSION['authProvider'];
+       
         $patientIssuesService->createIssue($issueRecord);
     }
 
@@ -755,6 +767,7 @@ function getCodeText($code)
 </script>
 </head>
 <body>
+  
     <div class="container-fluid mt-3">
         <ul class="tabNav">
             <li class='current'><a href='#'><?php echo xlt('Issue'); ?></a></li>

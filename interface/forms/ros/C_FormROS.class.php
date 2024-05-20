@@ -14,6 +14,7 @@ require_once($GLOBALS['fileroot'] . "/library/forms.inc.php");
 require_once("FormROS.class.php");
 
 use OpenEMR\Common\Csrf\CsrfUtils;
+use Middleware\MiddlewareService;
 
 class C_FormROS extends Controller
 {
@@ -70,6 +71,14 @@ class C_FormROS extends Controller
             addForm($GLOBALS['encounter'], "Review Of Systems", $this->form->id, "ros", $GLOBALS['pid'], $_SESSION['userauthorized']);
             $_POST['process'] = "";
         }
+        $middlewareService = new MiddlewareService();
+
+        $postData = array(
+            "ros" => $_POST,
+            "eid" => $GLOBALS['encounter']
+        );
+        $middlewareService->insertROS($postData);
+        // echo var_dump($postData);
 
         return;
     }

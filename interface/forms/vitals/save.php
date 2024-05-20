@@ -15,7 +15,6 @@ require_once("$srcdir/api.inc.php");
 require_once "C_FormVitals.class.php";
 
 use OpenEMR\Common\Csrf\CsrfUtils;
-
 if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
     CsrfUtils::csrfNotVerified();
 }

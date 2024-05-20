@@ -18,6 +18,7 @@ require_once("$srcdir/api.inc.php");
 require_once("$srcdir/forms.inc.php");
 
 use OpenEMR\Common\Csrf\CsrfUtils;
+use Middleware\MiddlewareService;
 
 if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
     CsrfUtils::csrfNotVerified();
@@ -41,6 +42,12 @@ $reasonStatusCode     = $_POST['reasonCodeStatus'];
 $reasonCodeText     = $_POST['reasonCodeText'];
 $reasonDateLow     = $_POST['reasonDateLow'] ?? '';
 $reasonDateHigh    = $_POST['reasonDateHigh'] ?? '';
+$postData = $_POST;
+
+if(!empty($count)){
+    $middlewareService = new MiddlewareService();
+    $middlewareService->insertCareplan($postData, $_SESSION["encounter"]);
+}
 
 if ($id && $id != 0) {
     sqlStatement("DELETE FROM `form_care_plan` WHERE id=? AND pid = ? AND encounter = ?", array($id, $_SESSION["pid"], $_SESSION["encounter"]));

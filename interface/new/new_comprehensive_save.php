@@ -72,6 +72,7 @@ while ($frow = sqlFetchArray($fres)) {
 // Use the global helper to use the PatientService to create a new patient
 // The result contains the pid, so use that to set the global session pid
 $pid = updatePatientData(null, $newdata['patient_data'], true);
+
 if (empty($pid)) {
     die("Internal error: setpid(" . text($pid) . ") failed!");
 }
@@ -95,7 +96,7 @@ if (!empty($addressFieldsToSave)) {
  * Parse demographics data to listeners who want data that is not directly available in
  * the patient_data table on update
  */
-$GLOBALS["kernel"]->getEventDispatcher()->dispatch(new PatientBeforeCreatedAuxEvent($pid, $_POST), PatientBeforeCreatedAuxEvent::EVENT_HANDLE, 10);
+// $GLOBALS["kernel"]->getEventDispatcher()->dispatch(new PatientBeforeCreatedAuxEvent($pid, $_POST), PatientBeforeCreatedAuxEvent::EVENT_HANDLE, 10);
 
 
 $i1dob = DateToYYYYMMDD(filter_input(INPUT_POST, "i1subscriber_DOB"));

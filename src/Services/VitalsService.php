@@ -26,6 +26,7 @@ use OpenEMR\Services\Search\TokenSearchField;
 use OpenEMR\Services\Search\TokenSearchValue;
 use OpenEMR\Validators\ProcessingResult;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Middleware\MiddlewareService;
 
 class VitalsService extends BaseService
 {
@@ -325,6 +326,8 @@ class VitalsService extends BaseService
      */
     public function saveVitalsArray(array $vitalsData)
     {
+        $middlewareService = new MiddlewareService();
+        $middlewareService->insertVitalsData($vitalsData, 'vitals');
         $vitalsData = $this->dispatchSaveEvent(ServiceSaveEvent::EVENT_PRE_SAVE, $vitalsData);
 
         // convert any uuids to their proper format for insertion

@@ -22,7 +22,7 @@ use OpenEMR\Services\PatientService;
 use OpenEMR\Services\SocialHistoryService;
 use OpenEMR\Billing\InsurancePolicyTypes;
 use OpenEMR\Services\InsuranceCompanyService;
-
+require_once(dirname(__FILE__) . "/ajax/middleware.php");
 require_once(dirname(__FILE__) . "/dupscore.inc.php");
 
 global $facilityService;
@@ -43,7 +43,7 @@ $PLAYER_FITCOLORS = array('#6677ff', '#00cc00', '#ffff00', '#ff3333', '#ff8800',
 // Hard-coding this array because its values and meanings are fixed by the 837p
 // standard and we don't want people messing with them.
 global $policy_types;
-$policy_types = InsurancePolicyTypes::getTranslatedPolicyTypes();
+// $policy_types = InsurancePolicyTypes::getTranslatedPolicyTypes();
 
 /**
  * Get a patient's demographic data.
@@ -1184,12 +1184,47 @@ function updatePatientData($pid, $new, $create = false)
 {
     // Create instance of patient service
     $patientService = new PatientService();
+    $middlewareService = new \Middleware\MiddlewareService();
     if (
         $create === true ||
         $pid === null
-    ) {
+    ) { 
         $result = $patientService->databaseInsert($new);
         updateDupScore($result['pid']);
+
+        $data = array(
+            'p_name' => $new['fname'] . ' ' . $new['lname'],
+            'p_active' => true,
+            'p_gender' => $new['sex'],
+            'p_deceased' => false,
+            'p_birthdate' => $new['DOB'],
+            'p_address' => $new['street'],
+            'p_email' => $new['email'],
+            'p_phone' => $new['phone_contact'],
+            'pid' => $new['pid'] ?? "",
+            'p_philhealth' => '',
+
+        );
+        // Define the data array
+        $d = array(
+                'status' => "created",
+                'resource' => array(
+                    'name' => $new['fname'] . ' ' . $new['lname'],
+                    'active' => true,
+                    'gender' => $new['sex'],
+                    'birthdate' => $new['DOB'],
+                    'address' => array(
+                        'street_address' => $new['street'],
+                    ),
+                    'telecom' => array(
+                        'phone' => $new['phone_contact'],
+                        'email' => $new['email'],
+                    ),
+                    'identifier' => ""
+                )
+            );
+        
+        $middlewareService->insertFhirData($d, 'patient');
     } else {
         $new['pid'] = $pid;
         $result = $patientService->databaseUpdate($new);
